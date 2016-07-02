@@ -8,6 +8,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 job_list=[]
 #fs = open("result/everjobs.csv", "r+")
 #fs=open("result/everjobs.csv","r+")
@@ -40,8 +41,8 @@ def lookup(driver):
             #get url each pagination
             #pagin=1 #remove here
             for i in range(1,(pagin+1)):
-                print ">>>>>>>>>>>>> pagin {}".format(str(i))
-                driver.get("https://www.everjobs.com.kh/en/jobs/?page="+str(i))
+                print "Go to >>>>>>>>>>>> {}/?page={}".format(category,str(i))
+                driver.get(category+"/?page="+str(i))
                 temp_selectors = driver.find_elements_by_css_selector(".col-xs-12 > .panel.hidden-sm > div.panel-heading > p > strong > a")
                 for selector in temp_selectors:
                     all_posts_url.append(selector.get_attribute('href'))
@@ -83,6 +84,7 @@ def lookup(driver):
         file.close()
         #fs.close()
         driver.close()
+        print "Process Finished Successfully"
     except TimeoutException:
         print("error ")
 if __name__ == "__main__":
