@@ -1,0 +1,8 @@
+create table job (id int primary key,company_name varchar(500),location varchar(500),logo varchar(200),title text,description text,requirement text,updated_at varchar(150),url varchar(200));
+
+CREATE SEQUENCE job_id START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+ALTER TABLE job  ALTER COLUMN id SET DEFAULT nextval('job_id'::regclass);
+
+
+ \copy job (company_name,location,logo,title,description,requirement,updated_at,url) from  '/home/user0/scraping/Extract1/result/result.csv' delimiter ';' csv  header 

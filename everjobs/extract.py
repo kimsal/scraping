@@ -10,63 +10,81 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 job_list=[]
-#fs = open("result/everjobs.csv", "r+")
-#fs=open("result/everjobs.csv","r+")
+file_url=open("result/urls.csv","w")
+file_url.write("")
+file_url=open("result/urls.csv","a")
+
 file=open("result/everjobs.csv","w")
-file.write("company_name;location;logo;title;description;requirement;updated_at;url\n")
+file.write("company_name;location;logo;title;Category;description;requirement;updated_at;contract_type;url\n")
 file=open("result/everjobs.csv","a")
 def init_driver():
     driver = webdriver.Firefox()
     return driver
 def lookup(driver):
     try:
-        driver.get("https://www.everjobs.com.kh/en/top/jobs/")
+        driver.get("https://www.everjobs.com.kh/en/top/categories/")
         allCategories = []
         allCategoriesSelector= driver.find_elements_by_css_selector(".container > div > section > div > div > a")
         #get all category url
-       # i=0 #remove here
+        #i=0 #remove here
         for selector in allCategoriesSelector:
             #if i<1: #remove here
-            allCategories.append(selector.get_attribute('href'))
+            category_name=(selector.text).split("(")[0]
+            print "Category Name ==>"+category_name
+            allCategories.append(selector.get_attribute('href')+"::"+category_name)
             #i=i+1 #remove here
         #print "{}".format(allCategories)
         print "There are {} categories".format(len(allCategories))
         all_posts_url=[]
         #go each category url,get pagin,get post url
+        #i=0
         for category in allCategories:
-            print "go to category >> {}".format(category)
-            driver.get(category)
+            #if i==0:
+            print "go to category >> {}".format(category.split("::")[0])
+            driver.get(category.split("::")[0])
             pagin=int(driver.find_element_by_css_selector("div:nth-child(1) > div > div > div > ul > li > form > .pagination-page-number > strong").text)
             print "There are {} pagin".format(pagin)
             #get url each pagination
             #pagin=1 #remove here
             for i in range(1,(pagin+1)):
-                print "Go to >>>>>>>>>>>> {}/?page={}".format(category,str(i))
-                driver.get(category+"/?page="+str(i))
+                print "Go to >>>>>>>>>>>> {}?page={}".format(category.split("::")[0],str(i))
+                driver.get(category.split("::")[0]+"?page="+str(i))
                 temp_selectors = driver.find_elements_by_css_selector(".col-xs-12 > .panel.hidden-sm > div.panel-heading > p > strong > a")
                 for selector in temp_selectors:
-                    all_posts_url.append(selector.get_attribute('href'))
-   
+                    all_posts_url.append(selector.get_attribute('href')+"::"+category.split("::")[1])
+            #i=i+1
         print "There are {} jobs".format(len(all_posts_url))
+        i=0
         for job in all_posts_url:
-            driver.get(job)
+            driver.get(job.split("::")[0])
             logo=""
             location=""
             company_name=""
             title=""
+            category=(job.split("::")[1]).replace(";",',')
             description=""
             requirement=""
             updated_at=""
+            contract_type=""
+            if len(driver.find_elements_by_css_selector(".row > div > div:nth-child(1) > div:nth-child(1) > dl > dd:nth-child(6)"))>0:
+                if driver.find_element_by_css_selector("#job-view > div.col-md-12.ca-wrapper > div.col-xs-12.white-box > div > div.col-md-8.col-xs-12 > div.row > div > div:nth-child(1) > div:nth-child(1) > dl > dt:nth-child(5)").text=="Contract Type:":
+                    contract_type=driver.find_element_by_css_selector(".row > div > div:nth-child(1) > div:nth-child(1) > dl > dd:nth-child(6)").text
+                elif driver.find_element_by_css_selector("#job-view > div.col-md-12.ca-wrapper > div.col-xs-12.white-box > div > div.col-md-8.col-xs-12 > div.row > div > div:nth-child(1) > div:nth-child(1) > dl > dt:nth-child(3)").text=="Contract Type:":
+                    contract_type=driver.find_element_by_css_selector("#job-view > div.col-md-12.ca-wrapper > div.col-xs-12.white-box > div > div.col-md-8.col-xs-12 > div.row > div > div:nth-child(1) > div:nth-child(1) > dl > dd:nth-child(4)").text
+
             if len(driver.find_elements_by_css_selector(".job-header-thumb img"))>0:
                 logo=driver.find_element_by_css_selector(".job-header-thumb img").get_attribute('src')
                 logo=logo.split("?")[0]
             if len(driver.find_elements_by_css_selector(".row > div > div:nth-child(1) > div:nth-child(1) > dl > dd:nth-child(2)"))>0:
                 location=driver.find_element_by_css_selector(".row > div > div:nth-child(1) > div:nth-child(1) > dl > dd:nth-child(2)").text
                 location=location.split(":")[0]
+                location=location.replace(';',',')
             if len(driver.find_elements_by_css_selector("#job-header > div:nth-child(1) > div > h4 > a"))>0:
                 company_name=driver.find_element_by_css_selector("#job-header > div:nth-child(1) > div > h4 > a").text
+                company_name=company_name.replace(';',',')
             if len(driver.find_elements_by_css_selector("#job-header > div:nth-child(1) > div > h3"))>0:
                 title=driver.find_element_by_css_selector("#job-header > div:nth-child(1) > div > h3").text
+                title=title.replace(';',',')
             if len(driver.find_elements_by_css_selector(".row > div > div:nth-child(3) > div > div.dl-horizontal"))>0:
                 description=driver.find_element_by_css_selector(".row > div > div:nth-child(3) > div > div.dl-horizontal").text
                 description=description.replace('\n',"<br/>").replace(';',',')
@@ -77,10 +95,12 @@ def lookup(driver):
             #     about_company=driver.find_element_by_css_selector(".row > div > div:nth-child(5) > div > div.dl-horizontal > p").text
             if len(driver.find_elements_by_css_selector("#job-date > strong"))>0:
                 updated_at=driver.find_element_by_css_selector("#job-date > strong").text
-            print "{};".format(title.encode("utf-8"))
-            data=company_name+";"+location+";"+logo+";"+title+";"+description+";"+requirement+";"+updated_at+";"+job
+            print str(i)+" - {}".format(title.encode("utf-8"))
+            data=company_name+";"+location+";"+logo+";"+title+";"+category+";"+description+";"+requirement+";"+updated_at+";"+contract_type+";"+job.split("::")[0]
             data=data.encode("utf-8")
+            file_url.write((job.split("::")[0]).encode("utf-8")+"\n")
             file.write(data+"\n")
+            i=i+1
         file.close()
         #fs.close()
         driver.close()
